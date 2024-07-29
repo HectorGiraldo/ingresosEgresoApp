@@ -1,31 +1,58 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, authState, User } from '@angular/fire/auth';
-import { addDoc, collection, Firestore } from '@angular/fire/firestore';
+import { Auth, authState, Unsubscribe } from '@angular/fire/auth';
+import {
+  addDoc,
+  collection,
+  Firestore,
+  getDocs,
+  query,
+  where,
+} from '@angular/fire/firestore';
+import { Store } from '@ngrx/store';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { map, Observable, Subscription } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { AppState } from '../app.reducer';
+import * as auth from '../auth/auth.actions';
 import { Usuario } from '../models/usuario.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private _user!: Usuario | null;
+
+  get user() {
+    return { ...this._user };
+  }
+
+  constructor(private store: Store<AppState>) {}
+
   private auth: Auth = inject(Auth);
   firestore: Firestore = inject(Firestore);
   authState$ = authState(this.auth);
-  authStateSubscription!: Subscription;
+  userUnsubscribe!: Unsubscribe;
 
   initAuthListener() {
-    this.authStateSubscription = this.authState$.subscribe(
-      (aUser: User | null) => {
-        //handle auth state changes here. Note, that user will be null if there is no currently logged in user.
-        console.log(aUser);
+    authState(this.auth).subscribe(async (fUser) => {
+      if (fUser) {
+        const userRef = collection(this.firestore, 'user');
+        const q = query(userRef, where('uid', '==', fUser.uid));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc: any) => {
+          this._user = doc.data();
+          this.store.dispatch(auth.setUser({ user: doc.data() }));
+        });
+      } else {
+        this._user = null;
+        this.userUnsubscribe ? this.userUnsubscribe() : null;
+        this.store.dispatch(auth.unSetUser());
       }
-    );
-    this.isAuthenticated();
+    });
   }
+
   crearUsuario(nombre: string, email: string, password: string) {
     return createUserWithEmailAndPassword(this.auth, email, password).then(
       ({ user }) => {
