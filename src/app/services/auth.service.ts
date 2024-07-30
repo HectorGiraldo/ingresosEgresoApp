@@ -16,6 +16,7 @@ import {
 import { map, Observable } from 'rxjs';
 import { AppState } from '../app.reducer';
 import * as auth from '../auth/auth.actions';
+import * as ingresoEgresoActions from '../ingreso-egreso/ingreso-egreso.actions';
 import { Usuario } from '../models/usuario.model';
 
 @Injectable({
@@ -49,6 +50,7 @@ export class AuthService {
         this._user = null;
         this.userUnsubscribe ? this.userUnsubscribe() : null;
         this.store.dispatch(auth.unSetUser());
+        this.store.dispatch(ingresoEgresoActions.unSetItems());
       }
     });
   }

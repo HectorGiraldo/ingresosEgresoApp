@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import {
   collection,
   collectionData,
+  deleteDoc,
   doc,
   Firestore,
   setDoc,
@@ -15,31 +16,35 @@ import { AuthService } from './auth.service';
 })
 export class IngresoEgresoService {
   firestore: Firestore = inject(Firestore);
-  users$!: Observable<[]>;
   constructor(private authService: AuthService) {}
 
   crearIngresoEgreso(ingresoEgreso: IngresoEgreso) {
-    console.log(this.authService.user);
     const uid = this.authService.user.uid;
     const collectionIngresoEgreso = collection(
       this.firestore,
       `${uid}/ingresos-egresos/items`
     );
     const documentRef = doc(collectionIngresoEgreso);
+    delete ingresoEgreso.uid;
     return setDoc(documentRef, { ...ingresoEgreso });
   }
 
   initIngresoEgresoListener(uid: string) {
-    console.log(uid);
-    const userProfileCollection = collection(
+    const collectionIngresoEgreso = collection(
       this.firestore,
       `${uid}/ingresos-egresos/items`
     );
-    this.users$ = collectionData(userProfileCollection, {
+    return collectionData(collectionIngresoEgreso, {
       idField: 'uid',
     }) as Observable<[]>;
-    this.users$.subscribe((data) => {
-      console.log(data);
-    });
+  }
+
+  borrarIngresoEgreso(uidItem: string) {
+    const uid = this.authService.user.uid;
+    const documentRef = doc(
+      this.firestore,
+      `${uid}/ingresos-egresos/items/${uidItem}`
+    );
+    return deleteDoc(documentRef);
   }
 }
