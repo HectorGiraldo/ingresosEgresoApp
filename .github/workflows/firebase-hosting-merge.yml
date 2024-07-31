@@ -10,9 +10,8 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: npm run build
-      - uses: AhsanAyaz/angular-deploy-gh-pages-actions@v1.3.1 
+      - name: Angular Deploy gh-pages Actions
+        uses: AhsanAyaz/angular-deploy-gh-pages-actions@v1.4.0 
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
